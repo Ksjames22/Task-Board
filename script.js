@@ -7,19 +7,10 @@ $(document).ready(function () {
   }
 
   function createTaskCard(task) {
-    let cardClass = '';
-    let deadline = dayjs(task.deadline);
-    let today = dayjs();
-    let daysUntilDeadline = deadline.diff(today, 'day');
-
-    if (daysUntilDeadline < 0) {
-      cardClass = 'border-danger';
-    } else if (daysUntilDeadline === 0 || daysUntilDeadline === 1) {
-      cardClass = 'border-warning';
-    }
-
+    let cardClass = getTaskCardClass(task);
+    
     return `
-      <div id="task-${task.id}" class="card mb-3 ${cardClass}">
+      <div id="task-${task.id}" class="card mb-3 task-card ${cardClass}" draggable="true">
         <div class="card-body">
           <h5 class="card-title">${task.title}</h5>
           <p class="card-text">${task.description}</p>
@@ -28,6 +19,20 @@ $(document).ready(function () {
         </div>
       </div>
     `;
+  }
+
+  function getTaskCardClass(task) {
+    let deadline = dayjs(task.deadline);
+    let today = dayjs();
+    let daysUntilDeadline = deadline.diff(today, 'day');
+
+    if (daysUntilDeadline < 0) {
+      return 'border-danger';
+    } else if (daysUntilDeadline === 0 || daysUntilDeadline === 1) {
+      return 'border-warning';
+    } else {
+      return '';
+    }
   }
 
   function renderTaskList() {
@@ -40,20 +45,30 @@ $(document).ready(function () {
       $(`#${task.status}-cards`).append(taskCard);
     });
 
-    $('.card').draggable({
-      revert: 'invalid',
-      helper: 'clone',
-      containment: 'document',
-      zIndex: 100,
-      scroll: false
+    $('.task-card').on('dragstart', function(event) {
+      $(this).addClass('dragging');
     });
 
-    $('.lane').droppable({
-      accept: '.card',
-      drop: handleDrop
+    $('.lane').on('dragover', function(event) {
+      event.preventDefault();
     });
 
-    $('.delete-btn').click(handleDeleteTask);
+    $('.lane').on('drop', function(event) {
+      let laneId = $(this).attr('id');
+      let taskId = $('.dragging').attr('id').replace('task-', '');
+
+      let task = taskList.find(task => task.id === parseInt(taskId));
+      task.status = laneId;
+      saveTasks();
+      renderTaskList();
+    });
+
+    $('.delete-btn').click(function(event) {
+      let taskId = $(this).closest('.card').attr('id').replace('task-', '');
+      taskList = taskList.filter(task => task.id !== parseInt(taskId));
+      saveTasks();
+      renderTaskList();
+    });
   }
 
   function handleAddTask(event) {
@@ -81,23 +96,6 @@ $(document).ready(function () {
     $('#formModal').modal('hide');
     renderTaskList();
     resetForm();
-  }
-
-  function handleDeleteTask(event) {
-    let taskId = $(this).closest('.card').attr('id').replace('task-', '');
-    taskList = taskList.filter(task => task.id !== parseInt(taskId));
-    saveTasks();
-    renderTaskList();
-  }
-
-  function handleDrop(event, ui) {
-    let laneId = $(this).attr('id');
-    let taskId = ui.draggable.attr('id').replace('task-', '');
-
-    let task = taskList.find(task => task.id === parseInt(taskId));
-    task.status = laneId;
-    saveTasks();
-    renderTaskList();
   }
 
   function saveTasks() {
