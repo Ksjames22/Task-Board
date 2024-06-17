@@ -1,3 +1,5 @@
+/* style.css */
+
 body {
     font-family: 'Open Sans', sans-serif;
     font-size: 16px;
@@ -8,9 +10,15 @@ body {
   }
   
   .task-card {
-    margin: 0 auto;
+    margin: 10px 0; /* Updated margin for better spacing */
+    padding: 10px;
+    background-color: #fff; /* Added background color for clarity */
+    border: 1px solid #ddd; /* Added border for delineation */
+    border-radius: 5px; /* Rounded corners for cards */
+    box-shadow: 0 0 5px rgba(0,0,0,0.1); /* Added subtle shadow for depth */
   }
   
   .task-card:hover {
     cursor: grab;
   }
+  
